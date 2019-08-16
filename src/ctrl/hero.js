@@ -141,7 +141,7 @@ export default function hero(ctrl, { g, a }) {
 
   const updateScore = delta => {
     ctrl.data.game.score += Math.floor(hero.active);
-    ctrl.data.game.score += Math.floor(hero.boost - 1);
+    ctrl.data.game.score += Math.floor(Math.sqrt(Math.sqrt(hero.boost - 1)));
   };
 
   const updateAudio = delta => {

@@ -66,7 +66,7 @@ export default function view(ctrl, g) {
       s: {
         color: 12,
         scale: 3,
-        render: true || ctrl.data.game.score > ctrl.data.highscore
+        render: ctrl.data.game.score > ctrl.data.highscore
       }
     }, g);
 
