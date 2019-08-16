@@ -2,8 +2,26 @@ import text from './text';
 
 import * as u from './util';
 
+export function jump(o, g) {
+  o = { ...defaults(), ...o };
 
-export default function texteffects(o, g) {
+
+  let jumpX = -o.jump * easing(u.sinh(o.t));
+  let gapX = Math.sin(o.t) * 2;
+
+  return text({ text: o.text,
+         hspacing: gapX,
+         x: o.x,
+         y: o.y + jumpX,
+         ...o.s
+       }, g);
+}
+
+const colors = [
+  ,3,4,5,6,7
+];
+
+export function wave(o, g) {
   o = { ...defaults(), ...o };
 
   const letters = o.text.split('');
@@ -11,13 +29,12 @@ export default function texteffects(o, g) {
   const gap = 10,
         moveX = 1;
 
-  letters.reduce((s, _, i) => {
+  return letters.reduce((s, _, i) => {
 
     const deltaX = u.sinh(o.t) + moveX;
 
     const x = s.ex + gap,
-          y = o.y + u.sinh(i + o.t) * o.jump;
-
+          y = o.y + easing(u.sinh(i * 0.2 + o.t)) * o.jump;
 
     text({ text: _,
            x: x + 2,
@@ -27,7 +44,7 @@ export default function texteffects(o, g) {
     return text({ text: _,
                   x: x + deltaX,
                   y,
-                  ...o.s }, g);
+                  ...{...o.s, color: colors[Math.round(y) % colors.length] } }, g);
   }, text({ text: letters[0],
             x: o.x, 
             y: o.y,
@@ -36,7 +53,6 @@ export default function texteffects(o, g) {
   
 }
 
-
 function defaults() {
   return {
     text: '',
@@ -44,7 +60,11 @@ function defaults() {
     x: 0,
     y: 0,
     t: 0,
-    jump: 10,
+    jump: 20,
     s: {}
   };
+};
+
+const easing = t => {
+  return t * t * t;
 };

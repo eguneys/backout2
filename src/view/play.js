@@ -121,16 +121,22 @@ export default function view(ctrl, g) {
   }
 
   function renderPaddle(ctrl, paddle, g) {
-    
+    const { tick } = ctrl.data.game;
+
     const { x, y, w, h, side } = paddle;
 
     const { vx, vy } = paddle;
 
+    const active = (vx === 1 || vy === 1);
+
     const off = 15,
           on = 12,
-          color = (vx === 1 || vy === 1) ? on: off;
+          color = active ? on: off;
 
     let moveX = 0, moveY = 0;
+
+    let sfxFactor = active ? 4: 0;
+    let sfxX = 0, sfxY = 0;
 
     let rangeFactor = 10;
     let range = {side};
@@ -144,6 +150,9 @@ export default function view(ctrl, g) {
       range.y = y - rangeFactor * 2;
       range.w = w + rangeFactor * 4;
       range.h = h + rangeFactor * 4;
+
+      sfxX = u.sinh(tick * 0.01) * sfxFactor;
+
       break;
     case 'right':
       moveX = -h * 0.08;
@@ -153,6 +162,8 @@ export default function view(ctrl, g) {
       range.y = y - rangeFactor * 2;
       range.w = w + rangeFactor * 4;
       range.h = h + rangeFactor * 4;
+
+      sfxX = -u.sinh(tick * 0.01) * sfxFactor;
       break;
     case 'up':
       moveY = w * 0.08;
@@ -162,6 +173,8 @@ export default function view(ctrl, g) {
       range.y = y;
       range.w = w + rangeFactor * 4;
       range.h = h + rangeFactor * 4;
+
+      sfxY = u.sinh(tick * 0.01) * sfxFactor;
       break;
     case 'down':
       moveY = -w * 0.08;
@@ -171,15 +184,21 @@ export default function view(ctrl, g) {
       range.y = y - rangeFactor * 4;
       range.w = w + rangeFactor * 4;
       range.h = h + rangeFactor * 4;
+
+      sfxY = -u.sinh(tick * 0.01) * sfxFactor;
       break;
     }
+
+    let sfxS = u.sinh(tick * 0.01) * 1,
+        sfxC = u.sinh(tick * 0.01) * 1;
+
 
     g.renderTarget = b.Collision;
     g.fr(range.x, range.y, range.w, range.h, u.Colors.PaddleRange);
 
     g.renderTarget = b.Midground;
-    g.fr(x + moveX, y + moveY, w, h, 16);
-    g.fr(x, y, w, h, color);
+    g.fr(x + moveX * sfxS + sfxX, y + moveY * sfxC + sfxY, w, h, 16);
+    g.fr(x + sfxX, y + sfxY, w, h, color);
 
   }
 
