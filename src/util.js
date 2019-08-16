@@ -30,6 +30,10 @@ export function randItem(items) {
   return items[randInt(0, items.length)];
 }
 
+export function sinh(v) {
+  return (Math.sin(v) + 1) / 2;
+}
+
 export function clamp(v, min, max) {
   return Math.min(Math.max(v, min), max);
 }

@@ -109,6 +109,10 @@ export default function ctrl(ctrl, ctx) {
   this.reset = () => {
     const d = defaults();
 
+    if (this.data.game.score > this.data.highscore) {
+      this.data.highscore = this.data.game.score;
+    }
+
     this.data.hero = d.hero;
     this.data.game = d.game;
 

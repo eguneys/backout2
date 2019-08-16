@@ -1,5 +1,6 @@
 import * as u from '../util';
 
+// forked from https://github.com/jackrugile/start-making-games/blob/gh-pages/src/js/G/screenshake.js
 export default function shake(ctrl, { g, a }) {
 
   const shake = ctrl.data.shake;

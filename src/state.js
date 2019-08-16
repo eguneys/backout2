@@ -15,6 +15,7 @@ export default function defaults() {
   return {
     debug: false,
     state: u.States.Over,
+    highscore: 0,
     shake: {
       angle: 0,
       x: 0,

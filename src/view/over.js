@@ -1,6 +1,7 @@
 import * as u from '../util';
 
 import text from '../text';
+import texteffects from '../texteffects';
 
 export default function view(ctrl, g) {
 
@@ -45,18 +46,21 @@ export default function view(ctrl, g) {
     let gap = height * 0.1;
     let s;
 
-    s = text({
-      x: width / 2,
+    texteffects({
+      text: 'new high score ' + score,
+      x: width * 0,
       y: height * 0.45,
-      text: 'high score ' + score,
-      color: 12,
-      scale: 3,
-      render: ctrl.data.gameover
+      t: ctrl.data.game.tick * 0.01,
+      s: {
+        color: 12,
+        scale: 3,
+        render: true || ctrl.data.game.score > ctrl.data.highscore
+      }
     }, g);
 
     s = text({
       x: width / 2,
-      y: s.ey + gap,
+      y: height * 0.6,
       text: 'press space to play.',
       color: action,
       scale: 2
