@@ -153,6 +153,12 @@ export default function ctrl(ctrl, ctx) {
     });
   };
 
+  this.extrude = (angle3) => {
+    this.data.extrusion.angle3[0] = angle3[0];
+    this.data.extrusion.angle3[1] = angle3[1];
+    this.data.extrusion.angle3[2] = angle3[2];
+  };
+
 
   this.update = delta => {
     maybeBoost(delta);

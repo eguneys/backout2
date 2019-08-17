@@ -187,6 +187,90 @@ export default function Graphics(state, ctx) {
     }
   };
 
+  const rotate = (a, b, angle) => [
+    Math.cos(angle) * a - Math.sin(angle) * b,
+    Math.sin(angle) * a + Math.cos(angle) * b
+  ];
+
+  const makeRotate3 = (angle3) => {
+
+    const cosa = Math.cos(angle3[0]),
+          sina = Math.sin(angle3[0]),
+          cosb = Math.cos(angle3[1]),
+          sinb = Math.sin(angle3[1]),
+          cosc = Math.cos(angle3[2]),
+          sinc = Math.sin(angle3[2]);
+
+    const Axx = cosa * cosb,
+          Axy = cosa * sinb * sinc - sina * cosc,
+          Axz = cosa * sinb * cosc + sina * sinc,
+
+          Ayx = sina * cosb,
+          Ayy = sina * sinb * sinc + cosa * cosc,
+          Ayz = sina * sinb * cosc - cosa * sinc,
+
+          Azx = -sinb,
+          Azy = cosb * sinc,
+          Azz = cosb * cosc;
+
+    return (x, y, z) => [
+      Axx * x + Axy * y + Axz * z,
+      Ayx * x + Ayy * y + Ayz * z,
+      Azx * x + Azy * y + Azz * z
+    ];
+  };
+
+  this.rspr3 = (sx, sy, sw, sh, destCenterX, destCenterY, angle3, tick) => {
+    let sourceCenterX = (sw / 2)|0,
+        sourceCenterY = (sh / 2)|0;
+
+    let halfWidth = (sw / 2)|0,
+        halfHeight = (sh / 2)|0;
+
+    let startX = -halfWidth,
+        endX = halfWidth,
+        startY = -halfHeight,
+        endY = halfHeight;
+
+    const rotate3 = makeRotate3(angle3);
+
+    for (let y = startY; y < endY; y++) {
+      for (let x = startX; x < endX; x++) {
+        let z = 100;
+
+        let drawX = (destCenterX + x)|0,
+            drawY = (destCenterY + y)|0;
+
+        let u_, v, w;
+
+        [u_, v, w] = rotate3(x, y, z);
+
+        if (w === 0) {
+          continue;
+        }
+
+        const pers = z;
+
+        [u_, v] = [sourceCenterX + Math.round(u_ / w * pers),
+                   sourceCenterY + Math.round(v / w * pers)];
+
+        if (drawX >= 0 && drawX < sw && 
+            drawY >= 0 && drawY < sh) {
+          
+          if (u_ >= 0 && u_ < sw &&
+              v >= 0 && v < sh) {
+            let iSource = this.renderSource + (u_ + sx) + (v + sy) * width,
+                iTarget = this.renderTarget + drawX + drawY * width;
+
+            if (ram[iSource] > 0) {
+              ram[iTarget] = pal[ram[iSource]];
+            }
+          }
+        }
+      }
+    }
+  };
+
 
   this.line = (x1, y1, x2, y2, color) => {
     x1 = x1|0;

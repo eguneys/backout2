@@ -20,6 +20,7 @@ export default function view(ctrl, g) {
     clear(ctrl, g);
 
     play.render(ctrl);
+
     over.render(ctrl);
 
     renderDebug(ctrl, g);
@@ -30,14 +31,35 @@ export default function view(ctrl, g) {
   };
 
   function effects(ctrl, g) {
+    extrusion(ctrl, g);
+    
+    shake(ctrl, g);
+  }
+
+  function extrusion(ctrl, g) {
     g.renderTarget = b.Effects;
     g.clear(0);
 
-    // let t = ctrl.data.game.tick * 0.01;
-    // let angle = Math.sin(t) * u.PI *0.1;
-    // let x = Math.sin(t) * 10,
-    //     y = Math.cos(t) * 10;
-    // angle = 0;
+    let { angle3 } = ctrl.data.extrusion;
+
+    angle3 = angle3.map(u.round);
+
+    g.renderSource = b.Screen;
+    g.renderTarget = b.Effects;
+    g.spr();
+
+    g.renderTarget = b.Screen;
+    //g.clear(0);
+    g.fr(0, 0, width, height, 0);
+
+    g.renderSource = b.Effects;
+    g.renderTarget = b.Screen;
+    g.rspr3(0, 0, width, height, width / 2, height / 2, angle3);
+  }
+
+  function shake(ctrl, g) {
+    g.renderTarget = b.Effects;
+    g.clear(0);
 
     let { angle, x, y } = ctrl.data.shake;
 

@@ -169,6 +169,23 @@ export default function hero(ctrl, { g, a }) {
     }
   };
 
+  this.xDeg = 0;
+  this.yDeg = 0;
+  const updateExtrusion = delta => {
+    const xDegTarget = (hero.y / height - 0.5) * 2,
+          yDegTarget = (hero.x / width - 0.5) * 2;
+    this.xDeg += (xDegTarget - this.xDeg) * 1;
+    this.yDeg += (yDegTarget - this.yDeg) * 1;
+    
+    const angle3 = [
+      0,
+      this.xDeg * 0.015,
+      this.yDeg * 0.015
+    ];
+    
+    // ctrl.extrude(angle3);
+  };
+
   const maybeUpdateTrailPos = delta => {
     if (!hero.exploding) {
       updatePos(delta);
@@ -187,6 +204,8 @@ export default function hero(ctrl, { g, a }) {
     updateAudio(delta);
     updateTicks(delta);
     updateScore(delta);
+
+    updateExtrusion(delta);
   };
 
   this.boost = boost => {

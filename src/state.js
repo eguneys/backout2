@@ -21,6 +21,13 @@ export default function defaults() {
       x: 0,
       y: 0
     },
+    extrusion: {
+      angle3: [
+        0,
+        0,
+        0
+      ]
+    },
     game: {
       score: 0,
       unit: gameUnit,
