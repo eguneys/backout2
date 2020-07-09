@@ -1,33 +1,14 @@
-export default function colors(ctrl) {
-  const { ctx } = ctrl;
-  const { unit, width, height } = ctrl.data.game;
-
-  const vignetteGradient = ctx.createRadialGradient(
-    width / 2,
-    height / 2,
-    0,
-    width / 2,
-    height / 2,
-    height);
-
-  vignetteGradient.addColorStop(0, 'hsla(0, 0%, 20%, 0.5)');
-  vignetteGradient.addColorStop(1, 'hsla(0, 0%, 0%, 0.5)');
-
-
-  const heroGradientSize = unit;
-  const heroGradient = ctx.createRadialGradient(
-    heroGradientSize / 2,
-    heroGradientSize / 2,
-    0,
-    heroGradientSize / 2,
-    heroGradientSize / 2,
-    heroGradientSize / 2);
-  heroGradient.addColorStop(0, 'hsla(0, 0%, 100%, 0.4)');
-  heroGradient.addColorStop(1, 'hsla(0, 0%, 100%, 0)');
-  
-  return {
-    vignetteGradient,
-    heroGradient,
-    heroGradientSize
-  };
-}
+export const Black = 0;
+export const Red = 5;
+export const Yellow = 9;
+export const Green = 15;
+export const Blue = 18;
+export const Cyan = 20;
+export const White = 22;
+export const Pink = 26;
+export const Purple = 28;
+export const Brown = 33;
+export const Green2 = 53;
+export const Gray = 42;
+export const Dirt = 63;
+export const Sky = 51;

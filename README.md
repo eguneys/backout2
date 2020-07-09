@@ -1,12 +1,10 @@
-Play live at https://js13kgames.com/games/backout/index.html
+Play live at 
 # Thanks
-
-[Rybar](http://code.ryanmalm.com/JS13k_2017_postmortem)
-
-[jackrugile](https://github.com/jackrugile/start-making-games)
 
 # misc
 
-[framebuffer gist](https://gist.github.com/eguneys/2768104a8be802905f75f09f3cd62b5a#file-framebuffer-js)
+[Simple physics based movement](https://stackoverflow.com/questions/667034/simple-physics-based-movement)
 
-[tweetcards gist](https://gist.github.com/eguneys/aad2ee1930ba782b187766c369bcf712)
+[Collision Manifold](https://gamedevelopment.tutsplus.com/tutorials/how-to-create-a-custom-2d-physics-engine-the-basics-and-impulse-resolution--gamedev-6331#:~:text=Collision%20resolution%20is%20the%20act,allow%20them%20to%20remain%20intersecting.&text=The%20idea%20behind%20impulse%20resolution,to%20separate%20objects%20found%20colliding.);
+
+[Collision AABB vs AABB](http://noonat.github.io/intersect/)

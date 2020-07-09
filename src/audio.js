@@ -6,7 +6,7 @@ import sndSplode2 from './audio/sndSplode2';
 import sndSplode3 from './audio/sndSplode3';
 import sndShield from './audio/sndShield';
 
-export default function Audio(state) {
+export default function Audio() {
 
   let ctx = new AudioContext(),
       audioMaster = ctx.createGain();

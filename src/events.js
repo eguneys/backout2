@@ -1,15 +1,15 @@
-import { Moves } from './ctrl';
+export default function Events() {
+  let data = this.data = {};
 
-export function bindDocument(ctrl) {
   const unbinds = [];
 
-  const onKeyDown = startMove(ctrl);
-  const onKeyUp = endMove(ctrl);
+  const onKeyDown = startMove(data);
+  const onKeyUp = endMove(data);
 
   unbinds.push(unbindable(document, 'keydown', onKeyDown));
   unbinds.push(unbindable(document, 'keyup', onKeyUp));
 
-  return () => { unbinds.forEach(_ => _()); };
+  this.unbind = () => { unbinds.forEach(_ => _()); };
 
 }
 
@@ -18,42 +18,50 @@ function unbindable(el, eventName, callback) {
   return () => el.removeEventListener(eventName, callback);
 }
 
-function endMove(ctrl) {
+function endMove(data) {
+  const releaseKey = (key) => {
+    data[key] = false;
+  };
+
   return function(e) {
     switch (e.code) {
     case 'ArrowUp':
-      ctrl.releaseKey('up');
+      releaseKey('up');
       break;
     case 'ArrowDown':
-      ctrl.releaseKey('down');
+      releaseKey('down');
       break;
     case 'ArrowLeft':
-      ctrl.releaseKey('left');
+      releaseKey('left');
       break;
     case 'ArrowRight':
-      ctrl.releaseKey('right');
+      releaseKey('right');
       break;
     }
   };
 }
 
-function startMove(ctrl) {
+function startMove(data) {
+  const pressKey = (key) => {
+    data[key] = true;
+  };
+
   return function(e) {
     switch(e.code) {
     case 'Space':
-      ctrl.spaceHit();
+      pressKey('space');
       break;
     case 'ArrowUp':
-      ctrl.pressKey('up');
+      pressKey('up');
       break;
     case 'ArrowDown':
-      ctrl.pressKey('down');
+      pressKey('down');
       break;
     case 'ArrowLeft':
-      ctrl.pressKey('left');
+      pressKey('left');
       break;
     case 'ArrowRight':
-      ctrl.pressKey('right');
+      pressKey('right');
       break;
     default:
       return;

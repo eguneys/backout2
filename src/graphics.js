@@ -1,7 +1,7 @@
-import * as u from './util';
+import * as mu from 'mutilz';
 
-export default function Graphics(state, ctx) {
-  const { width, height } = state.game;
+export default function Graphics(ctx, options) {
+  const { width, height } = options;
   const halfw = width / 2,
         halfh = height / 2;
 
@@ -115,14 +115,14 @@ export default function Graphics(state, ctx) {
 
 
   this.pset = (x, y, color) => {
-    x = u.clamp(x | 0, 0, width);
-    y = u.clamp(y | 0, 0, height);
+    x = mu.clamp(x | 0, 0, width);
+    y = mu.clamp(y | 0, 0, height);
     ram[this.renderTarget + y * width + x] = color;
   };
 
   this.pget = (x, y, page) => {
-    x = u.clamp(x | 0, 0, width);
-    y = u.clamp(y | 0, 0, height);
+    x = mu.clamp(x | 0, 0, width);
+    y = mu.clamp(y | 0, 0, height);
     return ram[page + y * width + x];
   };
 
@@ -418,7 +418,7 @@ export default function Graphics(state, ctx) {
     }
 
     imageData.data.set(buf8);
-    ctx.rotate(u.PI * 0.5);
+    ctx.rotate(mu.PI * 0.5);
     ctx.putImageData(imageData, 0, 0);
   };
 }

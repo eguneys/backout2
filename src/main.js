@@ -1,63 +1,60 @@
 import defaults from './state';
 
+import Canvas from './canvas';
 import Audio from './audio';
+import Loop from 'loopz';
+import Play from './play';
 import Graphics from './graphics';
-import makeView from './view';
-import makeCtrl from './ctrl';
-import Loop from './loop';
 
-import * as events from './events';
+import Events from './events';
 
 export function app(element, options) {
 
-  const canvas = document.createElement('canvas');
-  const canvasCtx = canvas.getContext('2d');
-
-  const state = {
+  const config = {
     ...defaults()
   };
 
-  let audio = new Audio(state);
+  let audio = new Audio();
 
-  if (!state.debug) {
+  if (!config.debug) {
     audio.generate().then(() => {
       audio.playSound('song', 1, 0, 0.2, true);
     });
   }
 
-  let graphics = new Graphics(state, canvasCtx);
+  let canvas = new Canvas(element, {
+    width: config.width,
+    height: config.height,
+    ratio: config.ratio
+  });
+
+  let graphics = new Graphics(canvas.ctx, {
+    width: config.width,
+    height: config.height
+  });
+
+  let events = new Events();
 
   let ctx = {
+    config,
+    events,
+    canvas,
     g: graphics,
     a: audio
   };
 
-  let ctrl = new makeCtrl(state, ctx);
-  let view = new makeView(ctrl, graphics);
+  let play = new Play(null, ctx);
 
   new Loop(delta => {
-    ctrl.update(delta);
-    view.render(ctrl);
+    play.update(delta);
+    play.render();
     graphics.render();
   }).start();
 
-  canvas.width = state.game.width;
-  canvas.height = state.game.height;
-  element.append(canvas);
-
-  events.bindDocument(ctrl);
-
   if (module.hot) {
-    module.hot.accept('./ctrl', function() {
+    module.hot.accept('./play', function() {
       try {
-        ctrl = new makeCtrl(state, graphics);
-      } catch (e) {
-        console.log(e);
-      }
-    });
-    module.hot.accept('./view', function() {
-      try {
-        view = new makeView(ctrl, graphics);
+        play = new Play(null, ctx);
       } catch (e) {
         console.log(e);
       }
