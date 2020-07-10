@@ -29,13 +29,23 @@ export default function Backout() {
   this.playerSlideGroundCollision = () => {
     let ctiles = ground.detectCollision(player.aabbSlide);
 
+    let mergedM;
+
     ctiles.forEach(ctile => {
       let manifold = aabbvsaabb(ctile.aabb, player.aabbSlide);
 
       if (manifold) {
         ctile.slideManifold(manifold);
+
+        if (mergedM) {
+          mergedM = mergeManifold(mergedM, manifold);
+        } else {
+          mergedM = manifold;          
+        }
       }
     });
+
+    return mergedM;
   };
 
   this.manifoldPlayerGroundCollision = () => {
@@ -86,12 +96,28 @@ function Tile(x, y) {
 
   this.aabb = rect(x, y, TileSize, TileSize);
 
+  let trail = this.trail = {};
+
   this.slideManifold = (manifold) => {
     let { xOverlap, yOverlap, xNormal, yNormal } = manifold;
 
     if (xOverlap <= slideOffset[0] * 1.2) {
-      if (yOverlap > slideOffset[1] * 2) {
-        
+      if (yOverlap > slideOffset[1] * 1.2) {
+        if (xNormal < 0) {
+          trail.left = true;
+        } else {
+          trail.right = true;
+        };
+      }
+    }
+
+    if (yOverlap <= slideOffset[1] * 1.2) {
+      if (xOverlap > slideOffset[0] * 1.2) {
+        if (yNormal < 0) {
+          trail.up = true;
+        } else {
+          trail.down = true;
+        }
       }
     }
 
@@ -214,7 +240,13 @@ function Player(backout) {
         grounded = manifold && manifold.yNormal < 0;
       }
 
-      backout.playerSlideGroundCollision();
+      updateCollision();
+      manifold = backout.playerSlideGroundCollision();
+
+      {
+        sliding = !grounded && manifold && manifold.xNormal;
+      }
+
     });
 
   };

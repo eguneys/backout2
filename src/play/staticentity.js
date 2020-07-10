@@ -22,4 +22,5 @@ export default function StaticEntity(aEntity, bs) {
   this.tileW = tileSize[0];
   this.tileH = tileSize[1];
 
+  this.trail = aEntity.trail;
 }
