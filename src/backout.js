@@ -69,6 +69,7 @@ export default function Backout() {
   this.update = (delta) => {
     player.userInput(userInput);
     player.update(delta);
+    ground.update(delta);
   };
 }
 
@@ -84,10 +85,18 @@ function Ground() {
     collt.addRectangle(tile, tile.aabb);
   };
 
+  const clearTrails = () => {
+    tiles.forEach(_ => _.clearTrails());
+  };
+
   this.detectCollision = collt.detectCollision;
 
   let lines = maker.makeWorld();
   lines.forEach(t => addTile(new Tile(t.x, t.y)));
+
+  this.update = delta => {
+    clearTrails();
+  };
 }
 
 function Tile(x, y) {
@@ -96,7 +105,26 @@ function Tile(x, y) {
 
   this.aabb = rect(x, y, TileSize, TileSize);
 
-  let trail = this.trail = {};
+  let trail = this.trail = {
+    up: 0,
+    left: 0,
+    down: 0,
+    right: 0
+  };
+
+  let trailLock = {};
+
+  let dontClear = false;
+
+  this.clearTrails = () => {
+    if (!dontClear) {
+      trailLock.left = 0;
+      trailLock.right = 0;
+      trailLock.up = 0;
+      trailLock.down = 0;
+    }
+    dontClear = false;
+  };
 
   this.slideManifold = (manifold) => {
     let { xOverlap, yOverlap, xNormal, yNormal } = manifold;
@@ -104,9 +132,13 @@ function Tile(x, y) {
     if (xOverlap <= slideOffset[0] * 1.2) {
       if (yOverlap > slideOffset[1] * 1.2) {
         if (xNormal < 0) {
-          trail.left = true;
+          if (!trailLock.left) {
+            trailLock.left = trail.left++;
+          }
         } else {
-          trail.right = true;
+          if (!trailLock.right) {
+            trailLock.right = trail.right++;
+          }
         };
       }
     }
@@ -114,14 +146,17 @@ function Tile(x, y) {
     if (yOverlap <= slideOffset[1] * 1.2) {
       if (xOverlap > slideOffset[0] * 1.2) {
         if (yNormal < 0) {
-          trail.up = true;
+          if (!trailLock.up) {
+            trailLock.up = trail.up++;
+          }
         } else {
-          trail.down = true;
+          if (!trailLock.down) {
+            trailLock.down = trail.down++;
+          }
         }
       }
     }
-
-
+    dontClear = true;
   };
 
 }

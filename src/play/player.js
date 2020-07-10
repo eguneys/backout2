@@ -200,7 +200,7 @@ function HSplash(play, ctx, bs) {
 
   let particles = new Pool(() => 
     new SplashParticle(this, ctx, {
-      life: 200,
+      life: 150,
       entity,
       onRelease(_) {
         particles.release(_);
@@ -215,7 +215,7 @@ function HSplash(play, ctx, bs) {
     // if (penX < 0) {
     //   y += tileH;
     // }
-    x += penX > 0 ? 0 : playerW;
+    x += penX > 0 ? 0 : playerW * 0.5;
 
     for (let i = 0; i < 10; i++) {
       let radius = mu.rand(tileH * 0.1, tileH * 0.2);
@@ -259,6 +259,7 @@ function VSplash(play, ctx, bs) {
 
   let particles = new Pool(() => 
     new SplashParticle(this, ctx, {
+      life: 150,
       entity,
       onRelease(_) {
         particles.release(_);
@@ -273,13 +274,13 @@ function VSplash(play, ctx, bs) {
     if (penY < 0) {
       y += tileH;
     }
-    x += playerW * 0.5 + playerW * 0.5 * facing * -1;
+    x += playerW * 0.5 + facing < 0 ? 0 : playerW * 0.5;
 
     for (let i = 0; i < 10; i++) {
-      let radius = mu.rand(tileH * 0.1, tileH * 0.2);
+      let radius = mu.rand(tileH * 0.1, tileH * 0.3);
 
-      let vx = mu.rand(tileW * 0.3, tileW * 0.8),
-          vy = mu.rand(tileH * 0.3, tileH * 0.8) * -1;
+      let vx = mu.rand(tileW * 0.2, tileW * 0.4),
+          vy = mu.rand(tileH * 0.2, tileH * 0.4) * -1;
 
       vx = (facing === 0)? vx : vx * facing * -1;
       vy = vy * 0.5 + facing === 0 ? 0 : vy * 0.5;

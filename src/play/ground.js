@@ -66,11 +66,28 @@ function Splash(play, ctx, bs) {
 
   const { g } = ctx;
 
+  let colours = [
+    0,
+    5,
+    4,
+    3,
+    2,
+    1,
+    0
+  ];
+
   let iss = {
     up: new iPol(0, 0, {}),
     down: new iPol(0, 0, {}),
     left: new iPol(0, 0, {}),
     right: new iPol(0, 0, {}),
+  };
+
+  let times = {
+    up: 0,
+    down: 0,
+    left: 0,
+    right: 0
   };
 
   this.update = (delta) => {
@@ -81,8 +98,9 @@ function Splash(play, ctx, bs) {
 
       let tT = _.target();
 
-      if (trail[key] && tT === 0) {
-        _.target(1);
+      if (trail[key] != times[key]) {
+        times[key] = trail[key];
+        _.both(0, 1);
       }
     });
 
@@ -91,23 +109,17 @@ function Splash(play, ctx, bs) {
   this.render = () => {
     let { trail: { up, down, left, right } } = entity;
 
-    if (up) {
-      renderVertical('up');
-    } 
-    if (down) {
-      renderVertical('down');
-    }
-    if (left) {
-      renderHorizontal('left');
-    }
-    if (right) {
-      renderHorizontal('right');
-    }
+    renderVertical('up', up);
+    renderVertical('down', down);
+    renderHorizontal('left', left);
+    renderHorizontal('right', right);
   };
 
-  let color = 5;
-
-  const renderVertical = (vDir) => {
+  const renderVertical = (vDir, times) => {
+    if (!times) {
+      return;
+    }
+    let color = colours[times % colours.length];
     let { x, y } = entity;
 
     let iVert = iss[vDir];
@@ -116,16 +128,35 @@ function Splash(play, ctx, bs) {
 
     let topOffset = vDir === 'up' ? 0 : tileH - tileH * 0.1;
 
+    let preColor = times - 1;
+
+    if (preColor !== 1) {
+      preColor = colours[preColor % colours.length];
+      g.fr(x, y + topOffset, tileW, tileH * 0.1, preColor);
+    }
+
     g.fr(x + (1.0 - _vVert) * tileW * 0.5, y + topOffset, tileW * _vVert, tileH * 0.1, color);
   };
 
-  const renderHorizontal = (vDir) => {
+  const renderHorizontal = (vDir, times) => {
+    if (!times) {
+      return;
+    }
+    let color = colours[times % colours.length];
     let { x, y } = entity;
 
     let iVert = iss[vDir];
     let _vVert = iVert.value();
 
     let rightOffset = vDir === 'left' ? 0 : (tileW - tileW * 0.1);
+
+
+    let preColor = times - 1;
+
+    if (preColor !== 0) {
+      preColor = colours[preColor % colours.length];
+      g.fr(x + rightOffset, y, tileW * 0.1, tileH, preColor);
+    }
 
     g.fr(x + rightOffset,
          y + (1.0 - _vVert) * tileH * 0.5,
