@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "loopz": "^1.0.3",
-    "mutilz": "^1.0.2"
+    "mutilz": "^1.0.2",
+    "poolf": "^1.0.6"
   }
 }

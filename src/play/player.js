@@ -1,29 +1,27 @@
+import * as mu from 'mutilz';
+import Pool from 'poolf';
 import * as v from '../vec2';
 import iPol from '../ipol';
-import { WorldSize, PlayerSize } from '../butil';
+import Phy from '../phy';
 
 export default function Player(play, ctx, bs) {
 
-  let { screen } = bs;
-
-  let ScreenSize = [screen.width, screen.height];
-
-  const worldToScreen = (wPos) => {
-    return v.cmapTo(wPos, WorldSize, ScreenSize);
-  };
-
-  let playerSize = worldToScreen(PlayerSize);
-
   let { entity } = bs;
+
+  let { playerSize } = entity;
 
   const { g } = ctx;
 
   let iIdle = new iPol(0, 1, { yoyo: true });
 
+  let cPenetration = new Penetration(this, ctx, bs);
+
   this.update = (delta) => {
     let { x, y } = entity;
 
     iIdle.update(delta / 300);
+
+    cPenetration.update(delta);
   };
 
   this.render = () => {
@@ -36,6 +34,8 @@ export default function Player(play, ctx, bs) {
     } else {
       renderVertical();
     }
+
+    cPenetration.render();
   };
 
   let [pWidth, pHeight] = playerSize;
@@ -120,6 +120,247 @@ export default function Player(play, ctx, bs) {
          pShieldW,
          pShieldH,
          50);
+  };
+  
+}
+
+function Penetration(play, ctx, bs) {
+
+  const { g } = ctx;
+
+  let { entity } = bs;
+
+  let { tileSize: [tileW, tileH] } = entity;
+
+  let vSplashes = new Pool(() => new VSplash(this, ctx, {
+    entity,
+    onRelease(_) {
+      vSplashes.release(_);
+    }
+  }));
+
+  let hSplashes = new Pool(() => new HSplash(this, ctx, {
+    entity,
+    onRelease(_) {
+      hSplashes.release(_);
+    }
+  }));
+
+  let runSplashCounter = 0;
+
+  const updateSplashes = (delta) => {
+    let { vx, penX, penY } = entity;
+
+    let aPenY = Math.abs(penY),
+        aPenX = Math.abs(penX);
+
+    if (aPenY > tileH * 0.015) {
+      vSplashes.acquire(_ => _.init());
+    } else if (aPenY > 0) {
+      if (!!vx) {
+        runSplashCounter++;
+      }
+    }
+
+    if (aPenX > tileW * 0.05) {
+      hSplashes.acquire(_ => _.init());
+    } else if (aPenX > 0) {
+
+    }
+
+    if (runSplashCounter > 5) {
+      runSplashCounter = 0;
+      vSplashes.acquire(_ => _.init());
+    }
+  };
+
+  this.update = (delta) => {
+    vSplashes.each(_ => _.update(delta));
+    hSplashes.each(_ => _.update(delta));
+
+    updateSplashes(delta);
+  };
+
+  this.render = () => {
+
+    vSplashes.each(_ => _.render());
+    hSplashes.each(_ => _.render());
+  };
+  
+}
+
+function HSplash(play, ctx, bs) {
+
+  const { g } = ctx;
+
+  let { entity } = bs;
+
+  let { playerSize: [playerW, playerH],
+        tileSize: [tileW, tileH] } = entity;
+
+  let particles = new Pool(() => 
+    new SplashParticle(this, ctx, {
+      life: 200,
+      entity,
+      onRelease(_) {
+        particles.release(_);
+      }
+    }));
+
+  let splashing = false;
+
+  this.init = () => {
+    let { x, y, penX, facing } = entity;
+
+    // if (penX < 0) {
+    //   y += tileH;
+    // }
+    x += penX > 0 ? 0 : playerW;
+
+    for (let i = 0; i < 10; i++) {
+      let radius = mu.rand(tileH * 0.1, tileH * 0.2);
+
+      let vx = mu.rand(tileW * 0.1, tileW * 0.5) * Math.sign(penX),
+          vy = mu.rand(tileH * 0.1, tileH * 0.5) * -1;
+
+      // vx = (facing === 0)? vx : vx * facing * -1;
+      // vy = vy * 0.5 + facing === 0 ? 0 : vy * 0.5;
+
+      particles.acquire(_ => _.init({
+        x, y, radius,
+        vx, vy
+      }));
+    }
+    splashing = true;
+  };
+
+  this.update = (delta) => {
+    if (splashing && particles.alives() === 0) {
+      splashing = false;
+      bs.onRelease(this);
+    }
+    particles.each(_ => _.update(delta));
+  };
+
+  this.render = () => {
+    particles.each(_ => _.render());
+  };
+  
+}
+
+function VSplash(play, ctx, bs) {
+
+  const { g } = ctx;
+
+  let { entity } = bs;
+
+  let { playerSize: [playerW, playerH],
+        tileSize: [tileW, tileH] } = entity;
+
+  let particles = new Pool(() => 
+    new SplashParticle(this, ctx, {
+      entity,
+      onRelease(_) {
+        particles.release(_);
+      }
+    }));
+
+  let splashing = false;
+
+  this.init = () => {
+    let { x, y, penY, facing } = entity;
+
+    if (penY < 0) {
+      y += tileH;
+    }
+    x += playerW * 0.5 + playerW * 0.5 * facing * -1;
+
+    for (let i = 0; i < 10; i++) {
+      let radius = mu.rand(tileH * 0.1, tileH * 0.2);
+
+      let vx = mu.rand(tileW * 0.3, tileW * 0.8),
+          vy = mu.rand(tileH * 0.3, tileH * 0.8) * -1;
+
+      vx = (facing === 0)? vx : vx * facing * -1;
+      vy = vy * 0.5 + facing === 0 ? 0 : vy * 0.5;
+
+      particles.acquire(_ => _.init({
+        x, y, radius,
+        vx, vy
+      }));
+    }
+    splashing = true;
+  };
+
+  this.update = (delta) => {
+    if (splashing && particles.alives() === 0) {
+      splashing = false;
+      bs.onRelease(this);
+    }
+    particles.each(_ => _.update(delta));
+  };
+
+  this.render = () => {
+    particles.each(_ => _.render());
+  };
+  
+}
+
+
+function SplashParticle(play, ctx, bs) {
+
+  const { g } = ctx;
+
+  let { entity } = bs;
+
+  let { life = 500 } = bs;
+
+  let { tileSize: [tileW, tileH] } = entity;
+
+  let color = 5;
+
+  let iI = new iPol(0, 0, {});
+
+  let phy = new Phy({
+    pos: [0, 0],
+    tMax: 30,
+    vMax: tileW * 0.3,
+    hMax: tileW * 10,
+    xSubH: tileW * 13
+  });
+
+  let radius;
+
+  this.init = (data) => {
+    phy.pos(data.x, data.y);
+    phy.vel(data.vx, data.vy);
+
+    phy.fall();
+
+
+    radius = data.radius;
+
+    iI.both(0, 1);
+  };
+
+  this.update = (delta) => {
+    iI.update(delta / life);
+
+    if (iI.target() === 1 && iI.settled()) {
+      bs.onRelease(this);
+    }
+
+    phy.update(delta / 16);
+  };
+
+  this.render = () => {
+    let vSplash = iI.value();
+
+    let [x, y] = phy.pos();
+
+    let r = radius * vSplash;
+
+    g.fillCircle(x, y, r, color);
   };
   
 }

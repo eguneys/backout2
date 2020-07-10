@@ -11,7 +11,7 @@ import * as maker from './maker';
 
 let [wX, wY] = WorldSize;
 
-let slideOffset = v.cscale(PlayerSize, 0.1);
+let slideOffset = v.cscale(PlayerSize, 0.2);
 let slideOffsetPos = v.cscale(slideOffset, -1);
 
 
@@ -136,6 +136,8 @@ function Player(backout) {
     xSubH: TileSize * 13
   }));
 
+  let oPenetration = this.oPenetration = observable([0, 0]);
+
   this.aabb = rect(0, 0, ...PlayerSize);
   this.aabbSlide = rect(...slideOffsetPos,
                         ...v.add(v.cadd(PlayerSize,
@@ -223,6 +225,9 @@ function Player(backout) {
         _.fallingVelocity();
       }
 
+      let xPenetration,
+          yPenetration;
+
       let manifold;
       _.updateX();
       updateCollision();
@@ -230,6 +235,8 @@ function Player(backout) {
       _.resolveX(manifold);
       {
         sliding = manifold && manifold.xNormal;
+        xPenetration = manifold && 
+          manifold.xOverlap * manifold.xNormal;
       }
 
       _.updateY();
@@ -238,14 +245,24 @@ function Player(backout) {
       _.resolveY(manifold);
       {
         grounded = manifold && manifold.yNormal < 0;
+
+        yPenetration = manifold && 
+          manifold.yOverlap * manifold.yNormal;
       }
 
       updateCollision();
       manifold = backout.playerSlideGroundCollision();
 
       {
-        sliding = !grounded && manifold && manifold.xNormal;
+        sliding = !yPenetration && manifold && 
+          Math.abs(manifold.yOverlap) > slideOffset[1] * 1.2 &&
+          manifold.xNormal;
       }
+
+      oPenetration.mutate(_ => {
+        _[0] = xPenetration;
+        _[1] = yPenetration;
+      });
 
     });
 

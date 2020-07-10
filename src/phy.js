@@ -195,4 +195,10 @@ export default function Phy({
     vel[1] = _vel[1];
     pos[1] = _pos[1];    
   };
+
+  this.update = (delta) => {
+    this.beginUpdate(delta);
+    this.updateX();
+    this.updateY();
+  };
 }

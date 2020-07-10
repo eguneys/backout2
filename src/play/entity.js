@@ -1,11 +1,18 @@
 import * as v from '../vec2';
-import { WorldSize } from '../butil';
+import { WorldSize, PlayerSize, TileSize } from '../butil';
 
 export default function Entity(aEntity, bs) {
 
   let { screen } = bs;
 
   let ScreenSize = [screen.width, screen.height];
+
+  const worldToScreen = (wPos) => {
+    return v.cmapTo(wPos, WorldSize, ScreenSize);
+  };
+
+  this.playerSize = worldToScreen(PlayerSize);
+  this.tileSize = worldToScreen([TileSize, TileSize]);
 
   this.x = 0;
   this.y = 0;
@@ -16,9 +23,8 @@ export default function Entity(aEntity, bs) {
   this.ax = 0;
   this.ay = 0;
 
-  const worldToScreen = (wPos) => {
-    return v.cmapTo(wPos, WorldSize, ScreenSize);
-  };
+  this.penX = 0;
+  this.penY = 0;
       
   aEntity.oPhy.subscribe(phy => {
     let pos = worldToScreen(phy.pos()),
@@ -33,6 +39,15 @@ export default function Entity(aEntity, bs) {
 
     this.ax = acc[0];
     this.ay = acc[1];
+
+    this.facing = Math.sign(this.vx);
+  });
+
+  aEntity.oPenetration.subscribe((penetration) => {
+    penetration = worldToScreen(penetration);
+
+    this.penX = penetration[0];
+    this.penY = penetration[1];
   });
 
 }
