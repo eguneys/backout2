@@ -56,6 +56,11 @@ export default function text(o, g) {
     ey = o.y + textHeight / 2;
   }
 
+  if (o.valign === 'top') {
+    sy = o.y - textHeight;
+    ey = o.y;
+  }
+
   let cx = sx + textWidth / 2,
       cy = sy + textHeight / 2;
 
@@ -72,6 +77,10 @@ export default function text(o, g) {
 
       if (o.valign === 'center') {
         y = y - textHeight / 2;
+      }
+
+      if (o.valign === 'top') {
+        y = y - textHeight;
       }
 
       textLine({

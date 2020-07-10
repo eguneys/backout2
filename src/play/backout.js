@@ -1,4 +1,4 @@
-import { rect } from '../dquad/geometry';
+import { rect } from '../dquad/rect';
 import Backout from '../backout';
 
 import Player from './player';

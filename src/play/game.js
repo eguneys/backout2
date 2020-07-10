@@ -1,5 +1,5 @@
 import Backout from './backout';
-import Game from './game';
+//import Game from './game';
 
 export default function GameComponent(play, ctx) {
 
@@ -14,7 +14,7 @@ export default function GameComponent(play, ctx) {
   };
 
   this.render = () => {
-    backout.render();    
+    backout.render();
   };
   
 }

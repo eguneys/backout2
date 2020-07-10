@@ -1,7 +1,7 @@
 import defaults from './state';
 
 import Canvas from './canvas';
-import Audio from './audio';
+// import Audio from './audio';
 import Loop from 'loopz';
 import Play from './play';
 import Graphics from './graphics';
@@ -14,13 +14,13 @@ export function app(element, options) {
     ...defaults()
   };
 
-  let audio = new Audio();
+  //let audio = new Audio();
 
-  if (!config.debug) {
-    audio.generate().then(() => {
-      audio.playSound('song', 1, 0, 0.2, true);
-    });
-  }
+  // if (!config.debug) {
+  //   audio.generate().then(() => {
+  //     audio.playSound('song', 1, 0, 0.2, true);
+  //   });
+  // }
 
   let canvas = new Canvas(element, {
     width: config.width,
@@ -40,7 +40,7 @@ export function app(element, options) {
     events,
     canvas,
     g: graphics,
-    a: audio
+    // a: audio
   };
 
   let play = new Play(null, ctx);

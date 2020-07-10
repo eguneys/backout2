@@ -25,7 +25,7 @@ export function makevline(x, y, n) {
   return res;
 }
 
-export function makeWorld () {
+export function makeWorld() {
   let res = [
     ...makeLine(0, wY-TileSize * nbTilesY, nbTilesX),
     ...makeLine(0, wY - TileSize, nbTilesX),
