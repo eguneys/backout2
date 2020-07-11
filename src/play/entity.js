@@ -1,15 +1,7 @@
 import * as v from '../vec2';
 import { WorldSize, PlayerSize, TileSize } from '../butil';
 
-export default function Entity(aEntity, bs) {
-
-  let { screen } = bs;
-
-  let ScreenSize = [screen.width, screen.height];
-
-  const worldToScreen = (wPos) => {
-    return v.cmapTo(wPos, WorldSize, ScreenSize);
-  };
+export default function Entity(aEntity, worldToScreen) {
 
   this.playerSize = worldToScreen(PlayerSize);
   this.tileSize = worldToScreen([TileSize, TileSize]);

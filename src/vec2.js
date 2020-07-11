@@ -14,6 +14,12 @@ export function copy(v1, v2 = []) {
   return v2;
 }
 
+export function set(v0, a = v0[0], b = v0[1]) {
+  v0[0] = a;
+  v0[1] = b;
+  return v0;
+}
+
 export function equal(v0, v1) {
   return v0[0] === v1[0] &&
     v0[1] === v1[1];
@@ -136,4 +142,9 @@ export function cdiv(v0, v1) {
 export function cmapTo(v0, from, to) {
   let r = cdiv(v0, from);
   return mul(r, to);
+}
+export function mapTo(v0, from, to) {
+  div(v0, from);
+  mul(v0, to);
+  return v0;
 }

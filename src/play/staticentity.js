@@ -1,18 +1,7 @@
 import * as v from '../vec2';
 import { TileSize, WorldSize } from '../butil';
 
-export default function StaticEntity(aEntity, bs) {
-
-  let { screen } = bs;
-
-  let ScreenSize = [screen.width, screen.height];
-
-  this.x = 0;
-  this.y = 0;
-
-  const worldToScreen = (wPos) => {
-    return v.cmapTo(wPos, WorldSize, ScreenSize);
-  };
+export default function StaticEntity(aEntity, worldToScreen) {
 
   let tileSize = worldToScreen([TileSize, TileSize]);
   let [x, y] = worldToScreen(aEntity.pos);

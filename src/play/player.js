@@ -154,7 +154,7 @@ function Penetration(play, ctx, bs) {
     let aPenY = Math.abs(penY),
         aPenX = Math.abs(penX);
 
-    if (aPenY > tileH * 0.015) {
+    if (aPenY > tileH * 0.05) {
       vSplashes.acquire(_ => _.init());
     } else if (aPenY > 0) {
       if (!!vx) {

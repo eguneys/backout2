@@ -205,9 +205,17 @@ function Player(backout) {
 
     oPhy.mutate(phy => {
       if (left) {
-        phy.horizontal(-1);
+        if (sliding === -1) {
+          phy.slidingBoost(sliding);
+        } else {
+          phy.horizontal(-1);
+        }
       } else if (right) {
-        phy.horizontal(1);
+        if (sliding === 1) {
+          phy.slidingBoost(sliding);
+        } else {
+          phy.horizontal(1);
+        }
       } else {
         phy.horizontal(0);
       }
@@ -295,8 +303,8 @@ function Player(backout) {
       }
 
       oPenetration.mutate(_ => {
-        _[0] = xPenetration;
-        _[1] = yPenetration;
+        _[0] = xPenetration ? xPenetration:0;
+        _[1] = yPenetration ? yPenetration:0;
       });
 
     });

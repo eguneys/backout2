@@ -7,6 +7,9 @@ import Soul from './soul';
 
 import Entity from './entity';
 import Ground from './ground';
+import WorldToScreen from './worldtoscreen';
+
+import FollowPlayer from './followplayer';
 
 export default function BackoutComponent(play, ctx) {
 
@@ -27,16 +30,19 @@ export default function BackoutComponent(play, ctx) {
 
   let backout = this.backout = new Backout();
 
+  let worldToScreen = this.worldToScreen = new WorldToScreen(bs.screen);
+
   let cSoul = new Soul(this, ctx);
 
-  let playerEntity = new Entity(backout.aPlayer, {
-    screen: bs.screen
-  });
+  let playerEntity = new Entity(backout.aPlayer, worldToScreen.worldToScreen);
 
   let cPlayer = new Player(this, ctx, {
     entity: playerEntity,
     ...bs
   });
+
+  let followPlayer = new FollowPlayer(playerEntity, 
+                                      worldToScreen);
 
   let cGround = new Ground(this, ctx, bs);
 
@@ -46,6 +52,8 @@ export default function BackoutComponent(play, ctx) {
     cSoul.update(delta);
 
     cGround.update(delta);
+
+    followPlayer.update(delta);
   };
 
   this.render = () => {
