@@ -1,10 +1,17 @@
 import * as v from '../vec2';
 import { WorldSize, PlayerSize, TileSize } from '../butil';
 
-export default function Entity(aEntity, worldToScreen) {
+export default function Entity(aEntity, camera) {
+
+  let { worldToScreen, oUpdateView } = camera;
 
   this.playerSize = worldToScreen(PlayerSize);
   this.tileSize = worldToScreen([TileSize, TileSize]);
+
+  this.halfPlayerSize = v.cscale(this.playerSize, 0.5);
+
+  this.wx = 0;
+  this.wy = 0;
 
   this.x = 0;
   this.y = 0;
@@ -17,11 +24,23 @@ export default function Entity(aEntity, worldToScreen) {
 
   this.penX = 0;
   this.penY = 0;
-      
-  aEntity.oPhy.subscribe(phy => {
-    let pos = worldToScreen(phy.pos()),
-        vel = worldToScreen(phy.vel()),
-        acc = worldToScreen(phy._acceleration());
+  
+  this.world = {
+    pos: [0, 0],
+    vel: [0, 0],
+    acc: [0, 0],
+    pen: [0, 0]
+  };
+  
+  
+  const updateView = () => {
+    let pos = worldToScreen(this.world.pos, true),
+        vel = worldToScreen(this.world.vel),
+        acc = worldToScreen(this.world.acc),
+        pen = worldToScreen(this.world.pen);
+
+    this.wx = this.world.pos[0];
+    this.wy = this.world.pos[1];
 
     this.x = Math.round(pos[0]);
     this.y = Math.round(pos[1]);
@@ -33,13 +52,22 @@ export default function Entity(aEntity, worldToScreen) {
     this.ay = acc[1];
 
     this.facing = Math.sign(this.vx);
+
+    this.penX = pen[0];
+    this.penY = pen[1];
+  };
+      
+  aEntity.oPhy.subscribe(phy => {
+    v.copy(phy.pos(), this.world.pos);
+    v.copy(phy.vel(), this.world.vel);
+    v.copy(phy._acceleration(), this.world.acc);
+    updateView();
   });
 
   aEntity.oPenetration.subscribe((penetration) => {
-    penetration = worldToScreen(penetration);
-
-    this.penX = penetration[0];
-    this.penY = penetration[1];
+    v.copy(penetration, this.world.pen);
+    updateView();
   });
 
+  oUpdateView.subscribe(updateView);
 }

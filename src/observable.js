@@ -9,6 +9,10 @@ export default function Observable(instance) {
 
   this.apply = (getter) => getter(instance);
 
+  this.notify = () => {
+    subs.forEach(_ => _());
+  };
+
   this.set = (mutation) => {
     instance = mutation(instance);
 

@@ -21,7 +21,9 @@ export default function Tile(play, ctx, bs) {
   let color = mu.rand(10, 12);
 
   this.render = () => {
-    let { x, y } = entity;
+    let { x, y, visible } = entity;
+
+    if (!visible) return;
 
     g.fr(x, y, tileW, tileH, color);
 

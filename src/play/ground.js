@@ -8,7 +8,7 @@ export default function Ground(play, ctx, bs) {
   let cTiles = backout
       .aGround
       .aTiles.map(_ => {
-        let entity = new StaticEntity(_, play.worldToScreen.worldToScreen);
+        let entity = new StaticEntity(_, play.worldToScreen);
         
         return new Tile(this, ctx, {
           entity,

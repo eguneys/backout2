@@ -34,7 +34,7 @@ export default function BackoutComponent(play, ctx) {
 
   let cSoul = new Soul(this, ctx);
 
-  let playerEntity = new Entity(backout.aPlayer, worldToScreen.worldToScreen);
+  let playerEntity = new Entity(backout.aPlayer, worldToScreen);
 
   let cPlayer = new Player(this, ctx, {
     entity: playerEntity,

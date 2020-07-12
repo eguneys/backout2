@@ -62,10 +62,10 @@ export function add(v0, v1, ...vs) {
   return v0;
 }
 
-export function sub(v0, v1) {
-  v0[0] -= v1[0];
-  v0[1] -= v1[1];
-  return v0;
+export function sub(v0, v1, res = v0) {
+  res[0] -= v1[0];
+  res[1] -= v1[1];
+  return res;
 }
 
 export function mul(v0, v1) {

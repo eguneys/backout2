@@ -75,6 +75,9 @@ export default function interpolator(a, b = a, {
       }
       return b;
     },
+    smoothtarget(x) {
+      b = x;
+    },
     value(x) {
       if (x || x === 0) {
         a = x;

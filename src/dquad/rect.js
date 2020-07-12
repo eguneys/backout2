@@ -18,7 +18,27 @@ export default function Rectangle(x, y, w, h) {
     return new Rectangle(x, y, w, h);
   };
 
-  this.move = (newX, newY) => {
+  this.moveCenter = (x, y) => {
+    this.move(x - w * 0.5, y - h * 0.5);
+  };
+
+  this.moveCenterX = (x) => {
+    this.moveX(x - w * 0.5);
+  };
+
+  this.moveCenterY = (y) => {
+    this.moveY(y - h * 0.5);
+  };
+
+  this.moveX = (x) => {
+    this.move(x);
+  };
+
+  this.moveY = (y) => {
+    this.move(x, y);
+  };
+
+  this.move = (newX = x, newY = y) => {
     x = this.x = newX;
     y = this.y = newY;
 
@@ -64,4 +84,8 @@ export default function Rectangle(x, y, w, h) {
   this.containsPoint = (pX, pY) => pX > x && pX < x1 &&
     pY > y && pY < y1;
   
+  this.overflowX = pX => pX <= x || pX >= x1;
+
+  this.overflowY = pY => pY <= y || pY >= y1;
+
 }
