@@ -274,7 +274,7 @@ function VSplash(play, ctx, bs) {
     if (penY < 0) {
       y += tileH;
     }
-    x += playerW * 0.5 + facing < 0 ? 0 : playerW * 0.5;
+    x += facing < 0 ? playerW * 1.5 : -playerW * 0.5;
 
     for (let i = 0; i < 10; i++) {
       let radius = mu.rand(tileH * 0.1, tileH * 0.3);

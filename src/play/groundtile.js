@@ -104,7 +104,7 @@ function Splash(play, ctx, bs) {
 
     let preColor = times - 1;
 
-    if (preColor !== 1) {
+    if (preColor !== 1 && preColor !== 0) {
       preColor = colours[preColor % colours.length];
       g.fr(x, y + topOffset, tileW, tileH * 0.1, preColor);
     }
@@ -127,7 +127,7 @@ function Splash(play, ctx, bs) {
 
     let preColor = times - 1;
 
-    if (preColor !== 0) {
+    if (preColor !== 0 && preColor !== 1) {
       preColor = colours[preColor % colours.length];
       g.fr(x + rightOffset, y, tileW * 0.1, tileH, preColor);
     }
