@@ -4,7 +4,9 @@ import Canvas from './canvas';
 // import Audio from './audio';
 import Loop from 'loopz';
 import Play from './play';
-import Graphics from './graphics';
+import Graphics from './graphics2';
+import Assets from './assets';
+import Frames from './frames';
 
 import Events from './events';
 
@@ -35,30 +37,42 @@ export function app(element, options) {
 
   let events = new Events();
 
-  let ctx = {
-    config,
-    events,
-    canvas,
-    g: graphics,
-    // a: audio
-  };
+  let assetsUrl = 'assets/images/';
 
-  let play = new Play(null, ctx);
+  new Assets({
+    all: 'all.png'
+  }, {
+    assetsUrl
+  }).start()
+    .then(assets => {
 
-  new Loop(delta => {
-    play.update(delta);
-    play.render();
-    graphics.render();
-  }).start();
+      let frames = Frames(assets);
 
-  if (module.hot) {
-    module.hot.accept('./play', function() {
-      try {
-        play = new Play(null, ctx);
-      } catch (e) {
-        console.log(e);
+      let ctx = {
+        frames,
+        config,
+        events,
+        canvas,
+        g: graphics,
+        // a: audio
+      };
+
+      let play = new Play(null, ctx);
+
+      new Loop(delta => {
+        play.update(delta);
+        play.render();
+      }).start();
+
+
+      if (module.hot) {
+        module.hot.accept('./play', function() {
+          try {
+            play = new Play(null, ctx);
+          } catch (e) {
+            console.log(e);
+          }
+        });
       }
     });
-  }
-
 }

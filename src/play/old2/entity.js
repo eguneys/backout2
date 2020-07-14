@@ -1,16 +1,17 @@
 import * as v from '../vec2';
-import { WorldSize, PlayerSize, TileSize } from '../butil';
+import { WorldSize, PlayerSize, GroundSize, TileSize } from '../butil';
 
 export default function Entity(aEntity, camera) {
 
   let { worldToScreen, oUpdateView } = camera;
 
   this.playerSize = worldToScreen(PlayerSize);
-  this.tileSize = worldToScreen([TileSize, TileSize]);
-
-  this.playerTileDiff = v.csub(this.playerSize, this.tileSize);
+  this.tileSize = worldToScreen(GroundSize);
 
   this.halfPlayerSize = v.cscale(this.playerSize, 0.5);
+
+  this.playerTileDiff = v.csub(this.tileSize, 
+                               this.playerSize);
 
   this.wx = 0;
   this.wy = 0;
@@ -47,9 +48,6 @@ export default function Entity(aEntity, camera) {
     this.x = Math.round(pos[0]);
     this.y = Math.round(pos[1]);
 
-    this.playerTileX = this.x + this.playerTileDiff[0];
-    this.playerTileY = this.y + this.playerTileDiff[1];
-
     this.vx = Math.round(vel[0]);
     this.vy = Math.round(vel[1]);
 
@@ -61,21 +59,18 @@ export default function Entity(aEntity, camera) {
     this.penX = pen[0];
     this.penY = pen[1];
   };
-
-  this.update = (delta) => {
-    this.sliding = aEntity.sliding();
-    this.grounded = aEntity.grounded();
-
-    updateView();
-  };
       
   aEntity.oPhy.subscribe(phy => {
     v.copy(phy.pos(), this.world.pos);
     v.copy(phy.vel(), this.world.vel);
     v.copy(phy._acceleration(), this.world.acc);
+    updateView();
   });
 
   aEntity.oPenetration.subscribe((penetration) => {
     v.copy(penetration, this.world.pen);
+    updateView();
   });
+
+  oUpdateView.subscribe(updateView);
 }

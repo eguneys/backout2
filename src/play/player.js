@@ -1,125 +1,93 @@
-import * as mu from 'mutilz';
 import Pool from 'poolf';
-import * as v from '../vec2';
-import iPol from '../ipol';
-import Phy from '../phy';
+import { rect } from '../dquad/geometry';
+import Animation from './animation';
 
 export default function Player(play, ctx, bs) {
+
+  let { frames, g } = ctx;
+
+  let mall = frames['all'];
 
   let { entity } = bs;
 
   let { playerSize } = entity;
 
-  const { g } = ctx;
+  let [w, h] = playerSize;      
 
-  let iIdle = new iPol(0, 1, { yoyo: true });
+  let baseBounds = rect(0, 0, w, h);
 
   let cPenetration = new Penetration(this, ctx, bs);
 
-  this.update = (delta) => {
-    let { x, y } = entity;
+  const animation = (key) => {
+    let bounds = rect(baseBounds.x, baseBounds.y,
+                      baseBounds.w, baseBounds.h);
+    return new Animation(this, ctx, {
+      textures: mall[key],
+      bounds
+    });
+  };
+  
+  const reversed = (animation) => {
+    animation.reversed();
+    return animation;
+  };
 
-    iIdle.update(delta / 300);
+  const animations = {
+    idle: animation('idle'),
+    runleft: reversed(animation('running')),
+    runright: animation('running'),
+    slidingleft: animation('sliding'),
+    slidingright: reversed(animation('sliding'))
+  };
+
+  let currentAnimationKey;
+
+  let currentAnimation = () => {
+    return animations[currentAnimationKey];
+  };
+
+  const getAnimationKey = () => {
+    let { x, y, vx, vy, sliding } = entity;
+
+    if (sliding) {
+      return sliding < 0 ? 'slidingright' : 'slidingleft';
+    } else if (vx === 0 && vy === 0) {
+      return 'idle';
+    } else if (vx < 0) {
+      return 'runleft';
+    } else if (vx > 0) {
+      return 'runright';
+    } else {
+      return 'idle';
+    }
+  };
+
+  const updateCurrentAnimation = () => {
+    let animationKey = getAnimationKey();
+    if (currentAnimationKey !== animationKey) {
+      currentAnimationKey = animationKey;
+      currentAnimation().play();
+    }
+  };
+
+  this.update = (delta) => {
+    entity.update(delta);
+
+    updateCurrentAnimation();
+
+    let anim = currentAnimation();
+    anim.update(delta);
+
+    let { x, y } = entity;
+    anim.move(x, y);
 
     cPenetration.update(delta);
   };
 
   this.render = () => {
-    let { vx, vy, ax, ay } = entity;
-
-    if (vx === 0 && vy === 0) {
-      renderIdle();
-    } else if (vx !== 0) {
-      renderHorizontal();
-    } else {
-      renderVertical();
-    }
-
+    let anim = currentAnimation();
+    anim.render();
     cPenetration.render();
-  };
-
-  let [pWidth, pHeight] = playerSize;
-  let pWidthThird = pWidth / 3;
-  let idleExtend = pHeight * 0.5;
-  let idleExtendThird = idleExtend / 2;
-
-  let pShieldW = pWidth * 0.8,
-      pShieldH = pHeight * 0.8;
-
-  const renderVertical = () => {
-    let { x, y, vy } = entity;
-
-    g.fr(x,
-         y,
-         pWidth,
-         pHeight,
-         43);
-
-
-    // eyes
-    g.fr(x + pWidth * 0.3,
-         y + pHeight * 0.01,
-         pShieldW,
-         pShieldH,
-         50);
-  };
-
-  const renderHorizontal = () => {
-    let { x, y, vx } = entity;
-
-    let left = vx < 0,
-        vLeft = left ? -1: 1;
-
-    g.fr(x,
-         y,
-         pWidthThird * 4, 
-         pHeight,
-         43);
-
-    let eyeOffset = pWidth * 0.5 + vLeft * pWidth * 0.2;
-
-    let vIdle = iIdle.value();
-    let vExtend = idleExtend * vIdle;
-
-    // shield
-    g.fr(x + vExtend * vLeft + eyeOffset,
-         y + pHeight * 0.01 + vExtend / 3,
-         pShieldW * 0.3,
-         pShieldH,
-         50);
-  };
-
-  const renderIdle = () => {
-    let { x, y } = entity;
-
-    let vIdle = iIdle.value();
-
-    let vExtend = idleExtend * vIdle,
-        vExtendThird = idleExtendThird * vIdle;
-
-    // torso
-    g.fr(x,
-         y + vExtendThird,
-         pWidthThird, 
-         pHeight - vExtendThird,
-         44);
-    g.fr(x + pWidthThird,
-         y + vExtend, 
-         pWidthThird, 
-         pHeight - vExtend,
-         44);
-    g.fr(x + pWidthThird * 2,
-         y + vExtendThird,
-         pWidthThird,
-         pHeight - vExtendThird,
-         44);
-
-    // shield
-    g.fr(x + pWidth * 0.3,
-         y + pHeight * 0.01,
-         pShieldW,
-         pShieldH,
-         50);
   };
   
 }
@@ -131,6 +99,7 @@ function Penetration(play, ctx, bs) {
   let { entity } = bs;
 
   let { tileSize: [tileW, tileH] } = entity;
+
 
   let vSplashes = new Pool(() => new VSplash(this, ctx, {
     entity,
@@ -168,7 +137,7 @@ function Penetration(play, ctx, bs) {
 
     }
 
-    if (runSplashCounter > 5) {
+    if (runSplashCounter > 7) {
       runSplashCounter = 0;
       vSplashes.acquire(_ => _.init());
     }
@@ -191,177 +160,93 @@ function Penetration(play, ctx, bs) {
 
 function HSplash(play, ctx, bs) {
 
-  const { g } = ctx;
+  let self = this;
+
+  const { frames, g } = ctx;
+
+  const mall = frames['all'];
 
   let { entity } = bs;
 
-  let { playerSize: [playerW, playerH],
-        tileSize: [tileW, tileH] } = entity;
+  let { tileSize: [tileW, tileH] } = entity;
 
-  let particles = new Pool(() => 
-    new SplashParticle(this, ctx, {
-      life: 150,
-      entity,
-      onRelease(_) {
-        particles.release(_);
-      }
-    }));
+  let bounds = rect(0, 0, tileW, tileH);
+  let cSplash = new Animation(this, ctx, {
+    textures: mall['trail2'],
+    bounds,
+    onHide: () => {
+      bs.onRelease(self);
+    }
+  });
 
-  let splashing = false;
+  cSplash.rotate(Math.PI * 0.5);
 
   this.init = () => {
     let { x, y, penX, facing } = entity;
 
-    // if (penX < 0) {
-    //   y += tileH;
-    // }
-    x += penX > 0 ? 0 : playerW * 0.5;
-
-    for (let i = 0; i < 10; i++) {
-      let radius = mu.rand(tileH * 0.1, tileH * 0.2);
-
-      let vx = mu.rand(tileW * 0.1, tileW * 0.5) * Math.sign(penX),
-          vy = mu.rand(tileH * 0.1, tileH * 0.5) * -1;
-
-      // vx = (facing === 0)? vx : vx * facing * -1;
-      // vy = vy * 0.5 + facing === 0 ? 0 : vy * 0.5;
-
-      particles.acquire(_ => _.init({
-        x, y, radius,
-        vx, vy
-      }));
+    if (penX < 0) {
+      cSplash.reversed();
+      bounds.move(x,
+                  y);
+    } else {
+      cSplash.unreversed();
+      bounds.move(x + tileW, y);
     }
-    splashing = true;
+    cSplash.once();    
   };
 
   this.update = (delta) => {
-    if (splashing && particles.alives() === 0) {
-      splashing = false;
-      bs.onRelease(this);
-    }
-    particles.each(_ => _.update(delta));
+    cSplash.update(delta);
   };
 
   this.render = () => {
-    particles.each(_ => _.render());
+    cSplash.render();
   };
   
 }
 
 function VSplash(play, ctx, bs) {
 
-  const { g } = ctx;
+  let self = this;
+
+  const { frames, g } = ctx;
+
+  const mall = frames['all'];
 
   let { entity } = bs;
 
-  let { playerSize: [playerW, playerH],
-        tileSize: [tileW, tileH] } = entity;
+  let { playerSize: [playerW, playerH], tileSize: [tileW, tileH] } = entity;
 
-  let particles = new Pool(() => 
-    new SplashParticle(this, ctx, {
-      life: 150,
-      entity,
-      onRelease(_) {
-        particles.release(_);
-      }
-    }));
-
-  let splashing = false;
-
-  this.init = () => {
-    let { x, y, penY, facing } = entity;
-
-    if (penY < 0) {
-      y += tileH;
+  let bounds = rect(0, 0, tileW, tileH);
+  let cSplash = new Animation(this, ctx, {
+    textures: mall['trail'],
+    bounds,
+    onHide: () => {
+      bs.onRelease(self);
     }
-    x += facing < 0 ? playerW * 1.5 : -playerW * 0.5;
-
-    for (let i = 0; i < 10; i++) {
-      let radius = mu.rand(tileH * 0.1, tileH * 0.3);
-
-      let vx = mu.rand(tileW * 0.2, tileW * 0.4),
-          vy = mu.rand(tileH * 0.2, tileH * 0.4) * -1;
-
-      vx = (facing === 0)? vx : vx * facing * -1;
-      vy = vy * 0.5 + facing === 0 ? 0 : vy * 0.5;
-
-      particles.acquire(_ => _.init({
-        x, y, radius,
-        vx, vy
-      }));
-    }
-    splashing = true;
-  };
-
-  this.update = (delta) => {
-    if (splashing && particles.alives() === 0) {
-      splashing = false;
-      bs.onRelease(this);
-    }
-    particles.each(_ => _.update(delta));
-  };
-
-  this.render = () => {
-    particles.each(_ => _.render());
-  };
-  
-}
-
-
-function SplashParticle(play, ctx, bs) {
-
-  const { g } = ctx;
-
-  let { entity } = bs;
-
-  let { life = 500 } = bs;
-
-  let { tileSize: [tileW, tileH] } = entity;
-
-  let color = 5;
-
-  let iI = new iPol(0, 0, {});
-
-  let phy = new Phy({
-    pos: [0, 0],
-    tMax: 30,
-    vMax: tileW * 0.3,
-    hMax: tileW * 10,
-    xSubH: tileW * 13
   });
 
-  let radius;
+  this.init = () => {
+    let { playerTileX: x, playerTileY: y, penY, facing } = entity;
 
-  this.init = (data) => {
-    phy.pos(data.x, data.y);
-    phy.vel(data.vx, data.vy);
-
-    phy.fall();
-
-
-    radius = data.radius;
-
-    iI.both(0, 1);
+    if (facing < 0) {
+      cSplash.reversed();
+      // I have no idea why * 2
+      bounds.move(x + playerW * 1.5,
+                  y);
+    } else {
+      cSplash.unreversed();
+      bounds.move(x - playerW, y);
+    }
+    cSplash.once();    
   };
 
   this.update = (delta) => {
-    iI.update(delta / life);
-
-    if (iI.target() === 1 && iI.settled()) {
-      bs.onRelease(this);
-    }
-
-    phy.update(delta / 16);
+    cSplash.update(delta);
   };
 
   this.render = () => {
-    let vSplash = iI.value();
-
-    let [x, y] = phy.pos();
-
-    let r = radius * vSplash;
-
-    g.fillCircle(x, y, r, color);
+    cSplash.render();
   };
   
 }

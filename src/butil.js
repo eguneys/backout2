@@ -9,6 +9,6 @@ export const nbTilesX = wX / TileSize;
 export const GroundSize = [TileSize, TileSize];
 export const PlayerSize = [TileSize * 1.2, TileSize * 1.2];
 
-let viewZoom = 2.3;
+let viewZoom = 2;
 export const ViewSize = [TileSize * 16 * viewZoom,
                          TileSize * 9 * viewZoom];

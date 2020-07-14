@@ -1,32 +1,46 @@
 import { objForeach } from '../util2';
-import iPol from '../ipol';
 import * as mu from 'mutilz';
-import * as v from '../vec2';
-import { WorldSize, TileSize } from '../butil';
+import { rect } from '../dquad/geometry';
+import Animation from './animation';
 
-export default function Tile(play, ctx, bs) {
+export default function GroundTile(play, ctx, bs) {
+
+  const { frames } = ctx;
+  const mall = frames['all'];
 
   let { entity } = bs;
 
-  let { tileW, tileH } = entity;
+  let { x, y, tileW, tileH } = entity;
 
-  const { g } = ctx;
+  let bounds = rect(x, y, tileW, tileH);
+
+  let cTile = new Animation(this, ctx, {
+    textures: mall['tiles'],
+    bounds
+  });
 
   let cSplash = new Splash(this, ctx, bs);
 
+  const nbFrames = 4;
+  let frame = mu.randInt(0, nbFrames);
+  
+  cTile.stop(frame);
+
+  let { g } = ctx;
+
   this.update = (delta) => {
+    cTile.update(delta);
     cSplash.update(delta);
   };
-
-  let color = mu.rand(10, 12);
 
   this.render = () => {
     let { x, y, visible } = entity;
 
-    if (!visible) return;
+    if (!visible) {
+      return;
+    }
 
-    g.fr(x, y, tileW, tileH, color);
-
+    cTile.render();
     cSplash.render();
   };
   
@@ -34,108 +48,64 @@ export default function Tile(play, ctx, bs) {
 
 function Splash(play, ctx, bs) {
 
+  let { g, frames } = ctx;
+
+  const mall = frames['all'];
+
   let { entity } = bs;
 
   let { tileW, tileH } = entity;
 
-  const { g } = ctx;
+  let baseBounds = rect(0, 0, tileW, tileH);
 
-  let colours = [
-    0,
-    5,
-    5,
-    3,
-    2,
-    1,
-    0
-  ];
-
-  let iss = {
-    up: new iPol(0, 0, {}),
-    down: new iPol(0, 0, {}),
-    left: new iPol(0, 0, {}),
-    right: new iPol(0, 0, {}),
+  const animation = () => {
+    let bounds = rect(baseBounds.x,
+                      baseBounds.y,
+                      baseBounds.w,
+                      baseBounds.h);
+    return new Animation(this, ctx, {
+      bounds,
+      textures: mall['trailtile']
+    });
   };
 
-  let times = {
-    up: 0,
-    down: 0,
-    left: 0,
-    right: 0
+  const down = (animation) => {
+    animation.scale(1, -1);
+    return animation;
+  };
+
+  const h = (animation, dir) => {
+    animation.rotate(Math.PI * 0.5);
+    if (dir === 'left') {
+      animation.scale(-1);
+    } else {
+      animation.origin(tileW);
+    }
+    return animation;
+  };
+
+  let cAnims = {
+    up: animation('up'),
+    down: down(animation('down')),
+    left: h(animation('left'), 'left'),
+    right: h(animation('right'), 'right')
   };
 
   this.update = (delta) => {
-    let { trail } = entity;
+    let { x, y, trail } = entity;
 
-    objForeach(iss, (key, _) => {
-      _.update(delta / 500);
+    objForeach(cAnims, (key, _) => {
+      _.update(delta);
 
-      let tT = _.target();
-
-      if (trail[key] != times[key]) {
-        times[key] = trail[key];
-        _.both(0, 1);
+      if (trail[key] === 1) {
+        _.move(x, y);
+        _.once(false);
       }
     });
-
   };
 
   this.render = () => {
-    let { trail: { up, down, left, right } } = entity;
-
-    renderVertical('up', up);
-    renderVertical('down', down);
-    renderHorizontal('left', left);
-    renderHorizontal('right', right);
-  };
-
-  const renderVertical = (vDir, times) => {
-    if (!times) {
-      return;
-    }
-    let color = colours[times % colours.length];
-    let { x, y } = entity;
-
-    let iVert = iss[vDir];
-
-    let _vVert = iVert.value();
-
-    let topOffset = vDir === 'up' ? 0 : tileH - tileH * 0.1;
-
-    let preColor = times - 1;
-
-    if (preColor !== 1 && preColor !== 0) {
-      preColor = colours[preColor % colours.length];
-      g.fr(x, y + topOffset, tileW, tileH * 0.1, preColor);
-    }
-
-    g.fr(x + (1.0 - _vVert) * tileW * 0.5, y + topOffset, tileW * _vVert, tileH * 0.1, color);
-  };
-
-  const renderHorizontal = (vDir, times) => {
-    if (!times) {
-      return;
-    }
-    let color = colours[times % colours.length];
-    let { x, y } = entity;
-
-    let iVert = iss[vDir];
-    let _vVert = iVert.value();
-
-    let rightOffset = vDir === 'left' ? 0 : (tileW - tileW * 0.1);
-
-
-    let preColor = times - 1;
-
-    if (preColor !== 0 && preColor !== 1) {
-      preColor = colours[preColor % colours.length];
-      g.fr(x + rightOffset, y, tileW * 0.1, tileH, preColor);
-    }
-
-    g.fr(x + rightOffset,
-         y + (1.0 - _vVert) * tileH * 0.5,
-         tileW * 0.1,
-         tileH * _vVert, color);
+    objForeach(cAnims, (key, _) => _.render());
   };
   
 }

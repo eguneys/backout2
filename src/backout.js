@@ -5,9 +5,13 @@ import Phy from './phy';
 import Collt from './collt';
 import { mergeManifold, aabbvsaabb } from './collt/detect';
 
-import { WorldSize, TileSize, PlayerSize } from './butil';
+import { WorldSize, 
+         TileSize,
+         PlayerSize, 
+         GroundSize } from './butil';
 
 import * as maker from './maker';
+import Levels from './levels';
 
 let [wX, wY] = WorldSize;
 
@@ -17,10 +21,20 @@ let slideOffsetPos = v.cscale(slideOffset, -1);
 
 export default function Backout() {
 
+  let levels = new Levels();
+
   let player = this.aPlayer = new Player(this);
   let ground = this.aGround = new Ground();
 
   let userInput;
+
+  this.userLevel = level => {
+    let { tiles,
+          player: _player } = levels.level(level);
+
+    ground.tiles(tiles);
+    player.userPosition(_player);
+  };
 
   this.userActionEvent = data => {
     userInput = data;
@@ -80,6 +94,8 @@ function Ground() {
 
   let tiles = this.aTiles = [];
 
+  let oTiles = this.oTiles = observable(null);
+
   const addTile = tile => {
     tiles.push(tile);
     collt.addRectangle(tile, tile.aabb);
@@ -91,8 +107,15 @@ function Ground() {
 
   this.detectCollision = collt.detectCollision;
 
-  let lines = maker.makeWorld();
-  lines.forEach(t => addTile(new Tile(t.x, t.y)));
+  this.tiles = (lines) => {
+    this.aTiles = tiles = [];
+    collt.clear();
+
+    lines.forEach(t => addTile(new Tile(t.x * TileSize,
+                                        t.y * TileSize)));
+
+    oTiles.notify();
+  };
 
   this.update = delta => {
     clearTrails();
@@ -163,12 +186,23 @@ function Tile(x, y) {
 
 function Player(backout) {
 
-  let oPhy = this.oPhy = observable(new Phy({ 
-    pos: [wX * 0.5, wY * 0.5],
+  let supermeatboy = {
     tMax: 30,
     vMax: TileSize * 0.3,
     hMax: TileSize * 6,
     xSubH: TileSize * 13
+  };
+
+  let backoutboy = {
+    tMax: 10,
+    vMax: TileSize * 0.15,
+    hMax: TileSize * 4,
+    xSubH: TileSize * 7    
+  };
+
+  let oPhy = this.oPhy = observable(new Phy({ 
+    pos: [wX * 0.5, wY * 0.5],
+    ...backoutboy
   }));
 
   let oPenetration = this.oPenetration = observable([0, 0]);
@@ -180,6 +214,16 @@ function Player(backout) {
                                  slideOffset));
 
   let userInput;
+
+  let playerSizeOffset = v.csub(GroundSize, PlayerSize);
+
+  this.userPosition = (player) => {
+    let { x, y } = player;
+
+    oPhy.mutate(phy => 
+      phy.pos(x * TileSize + playerSizeOffset[0], 
+              y * TileSize + playerSizeOffset[1]));
+  };
   
   this.userInput = (_userInput) => {
     userInput = _userInput;
@@ -187,6 +231,9 @@ function Player(backout) {
 
   let sliding;
   let grounded;
+
+  this.sliding = () => sliding;
+  this.grounded = () => grounded;
 
   let upUsed = false;
 

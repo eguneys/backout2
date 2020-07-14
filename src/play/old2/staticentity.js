@@ -24,6 +24,5 @@ export default function StaticEntity(aEntity, camera) {
     this.visible = camera.visible(pos);
   };
 
-  updateView();
   oUpdateView.subscribe(updateView);
 }

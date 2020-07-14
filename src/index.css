@@ -1,4 +1,5 @@
 #app canvas {
+  image-smoothing: false;
   image-rendering: pixelated;
   cursor: none;
   margin: auto;

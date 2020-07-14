@@ -81,8 +81,8 @@ export default function Rectangle(x, y, w, h) {
     return true;
   };
 
-  this.containsPoint = (pX, pY) => pX > x && pX < x1 &&
-    pY > y && pY < y1;
+  this.containsPoint = (pX, pY) => pX >= x && pX < x1 &&
+    pY >= y && pY < y1;
   
   this.overflowX = pX => pX <= x || pX >= x1;
 
