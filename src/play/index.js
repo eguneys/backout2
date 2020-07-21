@@ -29,9 +29,7 @@ export default function Play(play, ctx) {
   };
 
   let buffers = [b.Ui,
-                 b.Collision,
                  b.Background,
-                 b.Midground,
                  b.Foreground,
                  b.Buffer,
                  b.Screen];
@@ -45,8 +43,6 @@ export default function Play(play, ctx) {
 
   const flushBuffers = [
     b.Background,
-    b.Collision,
-    b.Midground,
     b.Foreground,
     b.Ui
   ];

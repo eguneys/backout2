@@ -25,6 +25,11 @@ function endMove(data) {
 
   return function(e) {
     switch (e.code) {
+    case 'KeyX':
+      releaseKey('x');
+      break;
+    case 'KeyC':
+      releaseKey('c');
     case 'ArrowUp':
       releaseKey('up');
       break;
@@ -48,9 +53,11 @@ function startMove(data) {
 
   return function(e) {
     switch(e.code) {
-    case 'Space':
-      pressKey('space');
+    case 'KeyX':
+      pressKey('x');
       break;
+    case 'KeyC':
+      pressKey('c');
     case 'ArrowUp':
       pressKey('up');
       break;

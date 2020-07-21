@@ -1,314 +1,185 @@
-import * as v from './vec2';
-import { rect } from './dquad/geometry';
-import { observable  } from './observable';
+import { objForeach } from './util2';
+import * as m from './map';
+import Levels from './levels';
 import Phy from './phy';
-import Collt from './collt';
-import { mergeManifold, aabbvsaabb } from './collt/detect';
-
-import { WorldSize, TileSize, PlayerSize } from './butil';
-
-import * as maker from './maker';
-
-let [wX, wY] = WorldSize;
-
-let slideOffset = v.cscale(PlayerSize, 0.2);
-let slideOffsetPos = v.cscale(slideOffset, -1);
-
+import Coll from './coll';
+import * as butil from './butil';
 
 export default function Backout() {
+  
+  let levels = new Levels();
 
-  let player = this.aPlayer = new Player(this);
-  let ground = this.aGround = new Ground();
+  let objects = this.objects = [];
 
-  let userInput;
+  let tiles;
 
-  this.userActionEvent = data => {
-    userInput = data;
+  this.userInit = (userInput) => {
+    loadLevel(0);
+
+    this.userInput = userInput;
   };
 
-  this.playerSlideGroundCollision = () => {
-    let ctiles = ground.detectCollision(player.aabbSlide);
+  this.eachTile = (fn, fFlag) => {
+    objForeach(tiles, (key, tile) => {
+      (!fFlag || fFlag(tile)) && fn(key, tile);
+    });
+  };
 
-    let mergedM;
+  this.fGet = (x, y, fFlag) => {
+    let key = m.pos2key([x, y]);
+    return fFlag(tiles[key]);
+  };
 
-    ctiles.forEach(ctile => {
-      let manifold = aabbvsaabb(ctile.aabb, player.aabbSlide);
+  const loadLevel = level => {
+    tiles = levels.level(level);
 
-      if (manifold) {
-        ctile.slideManifold(manifold);
+    objForeach(tiles, (key, tile) => {
+      let pos = m.key2pos(key);
 
-        if (mergedM) {
-          mergedM = mergeManifold(mergedM, manifold);
-        } else {
-          mergedM = manifold;          
-        }
+      let obj;
+      switch (tile.type) {
+      case 'player':
+        obj = new Player(this);
+      }
+      if (obj) {
+        this.initObject(obj, pos[0], pos[1]);
       }
     });
-
-    return mergedM;
   };
 
-  this.manifoldPlayerGroundCollision = () => {
-    let ctiles = ground.detectCollision(player.aabb);
-
-    return ctiles.reduce((acc, ctile) => {
-      let manifold = aabbvsaabb(ctile.aabb, player.aabb);
-
-      if (!acc) {
-        return manifold;
-      }
-
-      if (!manifold) {
-        return acc;
-      }
-
-      return mergeManifold(acc, manifold);
-    }, null);
+  this.initObject = (obj, x, y) => {
+    objects.push(obj);
+    obj.init(x * butil.TileSize, y * butil.TileSize);
+    return obj;
   };
 
-  this.update = (delta) => {
-    player.userInput(userInput);
-    player.update(delta);
-    ground.update(delta);
-  };
-}
-
-function Ground() {
-
-  let bounds = rect(0, 0, wX, wY);
-  let collt = new Collt(bounds);
-
-  let tiles = this.aTiles = [];
-
-  const addTile = tile => {
-    tiles.push(tile);
-    collt.addRectangle(tile, tile.aabb);
+  this.destroyObject = (obj) => {
+    objects.splice(objects.indexOf(obj), 1);
   };
 
-  const clearTrails = () => {
-    tiles.forEach(_ => _.clearTrails());
-  };
-
-  this.detectCollision = collt.detectCollision;
-
-  let lines = maker.makeWorld();
-  lines.forEach(t => addTile(new Tile(t.x, t.y)));
 
   this.update = delta => {
-    clearTrails();
-  };
-}
-
-function Tile(x, y) {
-
-  this.pos = [x, y];
-
-  this.aabb = rect(x, y, TileSize, TileSize);
-
-  let trail = this.trail = {
-    up: 0,
-    left: 0,
-    down: 0,
-    right: 0
-  };
-
-  let trailLock = {};
-
-  let dontClear = false;
-
-  this.clearTrails = () => {
-    if (!dontClear) {
-      trailLock.left = 0;
-      trailLock.right = 0;
-      trailLock.up = 0;
-      trailLock.down = 0;
-    }
-    dontClear = false;
-  };
-
-  this.slideManifold = (manifold) => {
-    let { xOverlap, yOverlap, xNormal, yNormal } = manifold;
-
-    if (xOverlap <= slideOffset[0] * 1.2) {
-      if (yOverlap > slideOffset[1] * 1.2) {
-        if (xNormal < 0) {
-          if (!trailLock.left) {
-            trailLock.left = trail.left++;
-          }
-        } else {
-          if (!trailLock.right) {
-            trailLock.right = trail.right++;
-          }
-        };
-      }
-    }
-
-    if (yOverlap <= slideOffset[1] * 1.2) {
-      if (xOverlap > slideOffset[0] * 1.2) {
-        if (yNormal < 0) {
-          if (!trailLock.up) {
-            trailLock.up = trail.up++;
-          }
-        } else {
-          if (!trailLock.down) {
-            trailLock.down = trail.down++;
-          }
-        }
-      }
-    }
-    dontClear = true;
+    objects.forEach(_ => _.move(delta));
+    objects.forEach(_ => _.update(delta));
   };
 
 }
 
 function Player(backout) {
 
-  let oPhy = this.oPhy = observable(new Phy({ 
-    pos: [wX * 0.5, wY * 0.5],
-    tMax: 30,
-    vMax: TileSize * 0.3,
-    hMax: TileSize * 6,
-    xSubH: TileSize * 13
-  }));
+  let _phy = new Phy(backout),
+      phy = _phy.phy;
 
-  let oPenetration = this.oPenetration = observable([0, 0]);
+  this.move = _phy.move;
+  this.phy = _phy.phy;
 
-  this.aabb = rect(0, 0, ...PlayerSize);
-  this.aabbSlide = rect(...slideOffsetPos,
-                        ...v.add(v.cadd(PlayerSize,
-                                        slideOffset), 
-                                 slideOffset));
-
-  let userInput;
-  
-  this.userInput = (_userInput) => {
-    userInput = _userInput;
+  let solidBases = {
+    up: false,
+    down: false,
+    left: false,
+    right: false
   };
 
-  let sliding;
-  let grounded;
+  let pJump,
+      jBuffer;
 
-  let upUsed = false;
+  let jumpX = 0,
+      jumpY = 0;
 
-  const updateCollision = () => {
-    let pos = oPhy.apply(_ => _.pos());
-    this.aabb.move(...pos);
+  let fallX = 0,
+      fallY = 0;
 
-    this.aabbSlide.move(...v.cadd(pos, slideOffsetPos));
-  };
-
-  const updateInput = () => {
-    if (!userInput) {
-      return;
-    }
-    let { up, left, down, right } = userInput;
-
-    oPhy.mutate(phy => {
-      if (left) {
-        if (sliding === -1) {
-          phy.slidingBoost(sliding);
-        } else {
-          phy.horizontal(-1);
-        }
-      } else if (right) {
-        if (sliding === 1) {
-          phy.slidingBoost(sliding);
-        } else {
-          phy.horizontal(1);
-        }
-      } else {
-        phy.horizontal(0);
-      }
-
-      if (up) {
-
-        if (!upUsed) {
-          if (sliding) {
-            upUsed = true;
-            phy.slidingBoost(sliding);
-          } else if (grounded) {
-            upUsed = true;
-            phy.verticalBoost();
-          }
-        }
-
-      } else {
-        upUsed = false;
-        if (sliding) {
-        } else if (phy.jumping()) {
-          phy.verticalBoostDrag();
-        }
-      }
-
-      if (!grounded) {
-        if (sliding) {
-          phy.slide();
-        } else if (phy.jumping()) {
-          
-        } else {
-          phy.fall();
-        }
-      }
-
-    }, true);      
+  this.init = (x, y) => {
+    phy.x = x;
+    phy.y = y;
   };
 
 
-  /* 
-   * Collision Resolution
-   * https://gamedev.stackexchange.com/questions/69339/2d-aabbs-and-resolving-multiple-collisions
-   */
   this.update = delta => {
-    updateInput();
+    
+    let { x,
+          c, 
+          up, 
+          down,
+          left,
+          right } = backout.userInput;
 
-    oPhy.mutate(_ => {
-      _.beginUpdate(delta / 16);
+    let inputX = left?-1:right?1:0;
+    let inputY = up?-1:down?1:0;
+    let inputJ = false;
 
-      if (_.peakOfTheJump()) {
-        _.fallingVelocity();
+    if (x) {
+      inputJ = !pJump;
+    }
+    pJump = x;
+
+    if (inputJ) {
+      jBuffer = 4;
+    } else if (jBuffer > 0) {
+      jBuffer--;
+    }
+
+    let edgeOff = butil.TileSize * 0.1;
+    let downSolid = _phy.isSolid(0, edgeOff),
+        upSolid = _phy.isSolid(0, -edgeOff),
+        leftSolid = _phy.isSolid(-edgeOff, 0),
+        rightSolid = _phy.isSolid(edgeOff, 0);
+
+    let hSolid = downSolid || upSolid,
+        vSolid = leftSolid || rightSolid,
+        noSolid = !hSolid && !vSolid;
+
+    let hJDir = downSolid?-1:1,
+        vJDir = rightSolid?-1:1;
+
+    _phy.dt(delta / 16);
+
+    if (!jumpX && (hSolid || noSolid)) {
+      _phy.accelX(inputX);
+      _phy.dragX();
+    }
+
+    if (!jumpY && (vSolid || noSolid)) {
+      _phy.accelY(inputY);
+      if (!jumpY) {
+        _phy.dragY();
       }
+    }
 
-      let xPenetration,
-          yPenetration;
+    if (!noSolid) {
+      _phy.cutJump();
+      jumpX = 0;
+      jumpY = 0;
+    }
 
-      let manifold;
-      _.updateX();
-      updateCollision();
-      manifold = backout.manifoldPlayerGroundCollision();
-      _.resolveX(manifold);
-      {
-        sliding = manifold && manifold.xNormal;
-        xPenetration = manifold && 
-          manifold.xOverlap * manifold.xNormal;
+    if (jBuffer > 0) {
+      jBuffer = 0;
+      if (hSolid) {
+        jumpY = hJDir;
+        _phy.jumpY(hJDir);
       }
-
-      _.updateY();
-      updateCollision();
-      manifold = backout.manifoldPlayerGroundCollision();
-      _.resolveY(manifold);
-      {
-        grounded = manifold && manifold.yNormal < 0;
-
-        yPenetration = manifold && 
-          manifold.yOverlap * manifold.yNormal;
+      if (vSolid) {
+        jumpX = vJDir;
+        _phy.jumpX(vJDir);
       }
+    }
 
-      updateCollision();
-      manifold = backout.playerSlideGroundCollision();
+    if (noSolid) {
+      fallX = fallX?fallX:solidBases.left?-1:solidBases.right?1:0;
+      fallY = fallY?fallY:solidBases.up?-1:solidBases.down?1:0;
+    } else {
+      fallX = 0;
+      fallY = 0;
+    }
 
-      {
-        sliding = !yPenetration && manifold && 
-          Math.abs(manifold.yOverlap) > slideOffset[1] * 1.2 &&
-          manifold.xNormal;
-      }
+    _phy.fallX(fallX);
+    _phy.fallY(fallY);
 
-      oPenetration.mutate(_ => {
-        _[0] = xPenetration ? xPenetration:0;
-        _[1] = yPenetration ? yPenetration:0;
-      });
+    _phy.vel();
 
-    });
-
+    solidBases.up = upSolid;
+    solidBases.down = downSolid;
+    solidBases.left = leftSolid;
+    solidBases.right = rightSolid;
   };
-
 }

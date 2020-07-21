@@ -1,7 +1,7 @@
 export default function defaults() {
 
   let ratio = 16 / 9,
-      width = 512,
+      width = 320,
       height = width / ratio;
 
   return {

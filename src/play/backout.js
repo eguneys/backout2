@@ -1,65 +1,60 @@
-import { rect } from '../dquad/rect';
+import { rect } from '../dquad/geometry';
+import * as m from '../map';
 import Backout from '../backout';
+import Camera from './camera';
 
-import Player from './player';
+export default function BackoutComponent(play, ctx, pbs) {
 
-import Soul from './soul';
-
-import Entity from './entity';
-import Ground from './ground';
-import WorldToScreen from './worldtoscreen';
-
-import FollowPlayer from './followplayer';
-
-export default function BackoutComponent(play, ctx) {
-
-  const { debug, width, height } = ctx.config;
+  const { g, events } = ctx;
 
   let bs = (() => {
+    let { width, height } = ctx.config;
 
     let screen = rect(0, 0, width, height);
 
     return {
-      screen,
-      width,
-      height
+      screen
     };
   })();
 
-  const { g } = ctx;
-
   let backout = this.backout = new Backout();
 
-  let worldToScreen = this.worldToScreen = new WorldToScreen(bs.screen);
+  backout.userInit(events.data);
 
-  let cSoul = new Soul(this, ctx);
-
-  let playerEntity = new Entity(backout.aPlayer, worldToScreen);
-
-  let cPlayer = new Player(this, ctx, {
-    entity: playerEntity,
-    ...bs
-  });
-
-  let followPlayer = new FollowPlayer(playerEntity, 
-                                      worldToScreen);
-
-  let cGround = new Ground(this, ctx, bs);
+  let camera = new Camera(bs);
 
   this.update = (delta) => {
     backout.update(delta);
-    cPlayer.update(delta);
-    cSoul.update(delta);
+  };
 
-    cGround.update(delta);
+  const fSolid = _ => _.solid;
 
-    followPlayer.update(delta);
+  let { ScreenGroundSize } = camera;
+
+  const renderTile = (key, tile) => {
+    let pos = m.key2pos(key);
+    pos = camera.worldToScreen(pos);
+    g.fr(pos[0] * ScreenGroundSize[0],
+         pos[1] * ScreenGroundSize[1], 
+         ScreenGroundSize[0], 
+         ScreenGroundSize[1], 2);
+  };
+
+  const renderObject = (obj) => {
+    let { x, y } = obj.phy;
+    let pos = camera.worldToScreen([x, y]);
+
+    g.fr(pos[0], 
+         pos[1], 
+         ScreenGroundSize[0], 
+         ScreenGroundSize[1], 6);
   };
 
   this.render = () => {
-    cGround.render();
-    cPlayer.render();
-    cSoul.render();
+
+    backout.eachTile(renderTile, fSolid);
+
+    backout.objects.forEach(renderObject);
   };
   
 }

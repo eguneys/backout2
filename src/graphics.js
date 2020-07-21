@@ -13,11 +13,9 @@ export default function Graphics(ctx, options) {
     Effects: pagesize,
     Buffer: pagesize * 2,
     Background: pagesize * 3,
-    Midground: pagesize * 4,
     Foreground: pagesize * 5,
     Sprites: pagesize * 7,
     Ui: pagesize * 8,
-    Collision: pagesize * 9,
   };
 
   const b = this.buffers;
